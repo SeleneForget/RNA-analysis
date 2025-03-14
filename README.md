@@ -1,13 +1,17 @@
-# Hairpin_Ribozyme_all-atom-MD Analysis Scripts
+RNA all-atom-MD Analysis Scripts
 
-Personal codes developped for the analysis of MD trajectories of RNA objects. 
-These scripts are either notebooks, of bash and python scripts developped along my thesis.
+Personal codes developed for the analysis of MD trajectories of RNA objects, and more specifically the hairpin riboyme. 
+These scripts are either notebooks, bash or python scripts developed along my thesis.
 
 
 ## How to run
 
-Open as jupyternotebook, and upload your own datas. 
+Open as jupyter notebook, and upload your datas. 
+
+In the case of bash scripts, 
 
 ## Requirements
-A few python libraries are required
+A few python libraries are required: 
+- MDAnalysis
+- 
 

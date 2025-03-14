@@ -1,6 +1,6 @@
-RNA all-atom-MD Analysis Scripts
+RNA all-atom-MD Analysis Scripts.
 
-Personal codes developed for the analysis of MD trajectories of RNA objects, and more specifically the hairpin riboyme. 
+Personal codes developed for the analysis of MD trajectories of RNA objects, and more specifically the hairpin ribozyme. 
 These scripts are either notebooks, bash or python scripts developed along my thesis.
 
 

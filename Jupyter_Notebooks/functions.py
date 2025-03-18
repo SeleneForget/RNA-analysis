@@ -12,6 +12,8 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 
 
+
+
 def plot_parallel_hists(
     counts_array: np.ndarray,
     bins_array: np.ndarray,
@@ -287,3 +289,235 @@ def plot_fingerprint(
     # Finalize plot
     plt.title(title)
     plt.show()
+
+
+
+def categorize_data_array(data_array: List[List[float]], feature_names: List[str]) -> np.ndarray:
+    """
+    Categorize data values into distinct groups based on predefined thresholds.
+    
+    This function processes a multi-feature data array and assigns category indices
+    based on value ranges specific to each feature type.
+    
+    Parameters
+    ----------
+    data_array : List[List[float]]
+        Input data organized as a list of lists, where each inner list represents 
+        values for a specific feature across all samples.
+    feature_names : List[str]
+        Names of the features corresponding to each list in data_array.
+        
+    Returns
+    -------
+    np.ndarray
+        Array of categorized values where each element represents the 
+        category index for a specific feature and sample.
+        
+    Raises
+    ------
+    SystemExit
+        If data_array is not a list.
+    """
+    # Validate input data structure
+    if not isinstance(data_array, list):
+        print("ERROR: data_array must be a list")
+        sys.exit(1)
+    
+    # Get dimensions of the data array
+    n_features, n_samples = np.shape(data_array)
+    
+    # Initialize output array (samples x features)
+    category_matrix = np.zeros((n_samples, n_features))
+    
+    # Process first 7 features with common threshold logic
+    for feature_idx in range(7):
+        feature_values = data_array[feature_idx]
+        
+        # Ensure proper variable reference
+        for sample_idx in range(len(feature_values)):
+            current_value = feature_values[sample_idx]
+            
+            # Categorize based on thresholds
+            if current_value <= 3.1:
+                category_matrix[sample_idx, feature_idx] = 1
+            elif 3.1 < current_value <= 4.1:
+                category_matrix[sample_idx, feature_idx] = 2
+            elif 4.1 < current_value <= 5.1:
+                category_matrix[sample_idx, feature_idx] = 3
+    
+    # Process feature at index 7 (PU parameter)
+    pu_idx = 7
+    pu_values = data_array[pu_idx]
+    for sample_idx in range(len(pu_values)):
+        if 0 <= pu_values[sample_idx] <= 36:
+            category_matrix[sample_idx, pu_idx] = 4
+        elif 144 <= pu_values[sample_idx] <= 180:
+            category_matrix[sample_idx, pu_idx] = 5
+    
+    # Process feature at index 8 (IAA parameter)
+    iaa_idx = 8
+    iaa_values = data_array[iaa_idx]
+    for sample_idx in range(len(iaa_values)):
+        if 140 <= iaa_values[sample_idx]:
+            category_matrix[sample_idx, iaa_idx] = 6
+        elif 125 <= iaa_values[sample_idx] < 140:
+            category_matrix[sample_idx, iaa_idx] = 7
+    
+    return category_matrix
+
+
+def cluster_data_combinations(category_matrix: np.ndarray) -> np.ndarray:
+    """
+    Identify unique combinations of categories and group samples accordingly.
+    
+    This function analyzes a categorized data matrix and groups samples that share
+    identical category patterns across all features.
+    
+    Parameters
+    ----------
+    category_matrix : np.ndarray
+        Matrix of categorized values where rows represent samples and columns represent features.
+        
+    Returns
+    -------
+    np.ndarray
+        Array of objects where each element contains:
+        - A unique category combination
+        - The count of samples with this combination
+        - List of sample indices with this combination
+    """
+    unique_combinations = []
+    combination_clusters = []
+    
+    n_samples, n_features = np.shape(category_matrix)
+    
+    # Iterate through all samples to find unique category combinations
+    for sample_idx in range(n_samples):
+        current_combination = list(category_matrix[sample_idx])
+        
+        if current_combination not in unique_combinations:
+            # Add new combination to the list
+            unique_combinations.append(current_combination)
+            combination_clusters.append([current_combination, 1, [sample_idx]])
+        else:
+            # Find the existing combination and update its count
+            found = False
+            cluster_idx = 0
+            
+            while not found and cluster_idx < len(combination_clusters):
+                if current_combination == list(combination_clusters[cluster_idx][0]):
+                    combination_clusters[cluster_idx][1] += 1
+                    combination_clusters[cluster_idx][2].append(sample_idx)
+                    found = True
+                cluster_idx += 1
+    
+    print(f"Analysis complete: found {len(unique_combinations)} unique combinations")
+    
+    # Convert to numpy array for consistency
+    result = np.asarray(combination_clusters, dtype="object")
+    return result
+
+
+def generate_colored_dataframe(
+    combinations_df: pd.DataFrame, 
+    feature_names: List[str], 
+    total_frames: int, 
+    cutoff: float = 0.002
+) -> Tuple[pd.DataFrame, List[int], int]:
+    """
+    Generate a colored dataframe representation of feature combinations.
+    
+    This function creates a visualization-ready dataframe where each combination
+    of feature categories is represented with appropriate coloring.
+    
+    Parameters
+    ----------
+    combinations_df : pd.DataFrame
+        DataFrame containing combination data with columns for combinations and counts.
+    feature_names : List[str]
+        Names of the features to be used as column labels.
+    total_frames : int
+        Total number of data frames/samples.
+    cutoff : float, optional
+        Minimum ratio of samples required to include a combination, by default 0.002.
+        
+    Returns
+    -------
+    Tuple[pd.DataFrame, List[int], int]
+        - Transposed colored dataframe
+        - List of x-axis positions
+        - Count of combinations included
+    """
+    # Initialize array to hold the visualization data
+    visualization_array = np.zeros((total_frames, len(feature_names)))
+    x_positions = []
+    
+    current_position = 0
+    combination_count = 0
+    
+    # Process combinations until reaching cutoff threshold
+    while True:
+        if combination_count >= len(combinations_df):
+            break
+            
+        # Get current combination data
+        count = combinations_df.iloc[combination_count, 1]
+        combination = combinations_df.iloc[combination_count, 0]
+        ratio = count / total_frames
+        
+        # Stop if below cutoff threshold
+        if ratio < cutoff:
+            break
+            
+        x_positions.append(current_position)
+        
+        # Fill visualization array with category values
+        for feature_idx in range(len(combination)):
+            for sample_idx in range(count):
+                visualization_array[current_position + sample_idx, feature_idx] = combination[feature_idx]
+        
+        current_position += count
+        combination_count += 1
+    
+    # Create and transpose the dataframe
+    colored_df = pd.DataFrame(visualization_array, columns=feature_names)
+    colored_df_transposed = colored_df.transpose()
+    
+    return colored_df_transposed, x_positions, combination_count
+
+
+
+def calculate_distribution_entropy(combinations_df: pd.DataFrame, total_samples: int) -> float:
+    """
+    Calculate the Shannon entropy of a distribution of combinations.
+    
+    This function computes the entropy of the distribution of different combinations
+    in the dataset, which quantifies the diversity or uncertainty of the dataset.
+    Higher entropy indicates more diversity in the combinations.
+    
+    Parameters
+    ----------
+    combinations_df : pd.DataFrame
+        DataFrame containing combination data with each row representing a unique
+        combination and the second column containing the count of samples with that combination.
+    total_samples : int
+        Total number of samples/frames in the dataset.
+        
+    Returns
+    -------
+    float
+        The calculated Shannon entropy value in bits (log base 2).
+    """
+    # Calculate the probability of each combination class
+    class_probabilities = []
+    for idx in range(len(combinations_df)):
+        # Extract the count of samples with this combination
+        count = combinations_df.iloc[idx, 1]
+        # Calculate the probability as the proportion of total samples
+        class_probabilities.append(count / total_samples)
+    
+    # Calculate Shannon entropy using the formula: -sum(p * log2(p))
+    entropy = -sum(p * np.log2(p) for p in class_probabilities if p > 0)
+    
+    print(f"Shannon entropy: {entropy:.4f} bits")
+    return entropy

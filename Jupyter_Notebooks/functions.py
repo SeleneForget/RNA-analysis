@@ -521,3 +521,29 @@ def calculate_distribution_entropy(combinations_df: pd.DataFrame, total_samples:
     
     print(f"Shannon entropy: {entropy:.4f} bits")
     return entropy
+
+
+
+
+def calculate_state_percentage(data_series: pd.Series, unique_states: list) -> pd.Series:
+    """
+    Calculate the percentage of occurrences for each unique state in the given series.
+    
+    Args:
+        data_series (pd.Series): A Pandas Series containing categorical data.
+        unique_states (list): A list of unique states to ensure all are represented.
+    
+    Returns:
+        pd.Series: A Pandas Series containing the percentage of each unique state.
+    """
+    state_counts = data_series.value_counts()
+    
+    # Ensure all unique states are represented
+    for state in unique_states:
+        if state not in state_counts:
+            state_counts[state] = 0
+    
+    # Calculate percentage
+    state_percentages = (state_counts / len(data_series)) * 100
+    
+    return state_percentages

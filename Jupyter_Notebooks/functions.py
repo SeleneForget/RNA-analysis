@@ -24,7 +24,7 @@ def plot_parallel_hists(
     filename: str,
     lines: Optional[List[Tuple[str, float]]] = None,
     xlim: Optional[Tuple[float, float]] = None
-) -> None:
+    ) -> None:
     """
     Creates a plot with multiple parallel histograms.
     
@@ -142,7 +142,7 @@ def polar_density_plot(
     cmap: str = 'twilight',
     save: bool = False,
     file: str = 'polarplot.png'
-) -> None:
+    ) -> None:
     """
     Creates a polar density plot to visualize pseudorotation angles.
     
@@ -234,7 +234,7 @@ def plot_fingerprint(
     combination: List[bool],
     title: str,
     long_names: Optional[List[str]] = None
-) -> None:
+    ) -> None:
     """
     Creates a fingerprint-like visualization for binary data.
     
@@ -423,7 +423,7 @@ def generate_colored_dataframe(
     feature_names: List[str], 
     total_frames: int, 
     cutoff: float = 0.002
-) -> Tuple[pd.DataFrame, List[int], int]:
+    ) -> Tuple[pd.DataFrame, List[int], int]:
     """
     Generate a colored dataframe representation of feature combinations.
     
